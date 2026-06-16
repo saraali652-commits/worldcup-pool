@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>⚽ World Cup 2026 Pool</title>
+<style>
+  :root {
+    --navy: #0d1b2a;
+    --green: #22c55e;
+    --green-soft: #dcfce7;
+    --border: #e5e7eb;
+    --muted: #6b7280;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: #111827; }
+  header { background: var(--navy); color: #fff; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+  header h1 { font-size: 1.25rem; margin: 0; }
+  header .whoami { font-size: 0.85rem; color: #cbd5e1; }
+  nav { display: flex; background: var(--navy); border-top: 1px solid rgba(255,255,255,0.08); overflow-x: auto; }
+  nav button { flex: 1; min-width: 90px; background: none; border: none; color: #cbd5e1; padding: 14px 10px; font-size: 0.92rem; cursor: pointer; border-bottom: 3px solid transparent; }
+  nav button.active { color: #fff; border-bottom-color: var(--green); font-weight: 600; }
+  main { max-width: 1100px; margin: 0 auto; padding: 18px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  h2 { font-size: 1.05rem; margin: 0 0 12px; }
+  h3 { font-size: 0.95rem; margin: 0 0 8px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  @media (max-width: 760px) { .grid2 { grid-template-columns: 1fr; } }
+  .badge { display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--navy); color: #fff; }
+  .badge.live { background: #ef4444; }
+  .badge.auto { background: var(--green); color: #052e16; }
+  .badge.you { background: var(--green); color: #052e16; margin-left: 6px; }
+  .date-header { font-size: 0.8rem; font-weight: 700; color: var(--muted); text-transform: uppercase; margin: 14px 0 4px; }
+  .match-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .match-row:last-child { border-bottom: none; }
+  .match-row .teams { flex: 1; font-size: 0.95rem; }
+  .match-row .meta { font-size: 0.78rem; color: var(--muted); }
+  .match-row .right { text-align: right; font-size: 0.85rem; white-space: nowrap; }
+  .score { font-weight: 700; font-size: 1.05rem; }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 6px 6px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; }
+  td.num, th.num { text-align: center; }
+  tr.advance { background: var(--green-soft); }
+  .team-btn { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 10px 12px; margin: 6px 0; border: 1.5px solid var(--border); border-radius: 10px; background: #fff; cursor: pointer; font-size: 0.95rem; }
+  .team-btn:hover { border-color: #cbd5e1; }
+  .team-btn.selected { border-color: var(--green); background: var(--green-soft); font-weight: 600; }
+  .team-btn .check { margin-left: auto; color: var(--green); font-weight: 700; }
+  .progress-wrap { background: var(--border); border-radius: 999px; height: 12px; overflow: hidden; }
+  .progress-bar { background: var(--green); height: 100%; width: 0%; transition: width .2s; }
+  button.primary { background: var(--green); color: #052e16; border: none; padding: 11px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.95rem; }
+  button.primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.ghost { background: #fff; border: 1.5px solid var(--border); padding: 9px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 0.88rem; }
+  input[type=text] { padding: 11px 12px; border: 1.5px solid var(--border); border-radius: 10px; font-size: 0.95rem; width: 100%; max-width: 320px; }
+  .invite { font-size: 0.82rem; color: var(--muted); word-break: break-all; }
+  .invite code { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; }
+  .flag-list { font-size: 1.05rem; letter-spacing: 1px; }
+  .flag-list .trailing { opacity: 0.3; }
+  .muted { color: var(--muted); font-size: 0.82rem; }
+  .group-letter { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; background: var(--navy); color: #fff; font-weight: 700; font-size: 0.8rem; }
+  .result-match { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+  .result-match:last-child { border-bottom: none; }
+  .result-match .t { flex: 1; }
+  .result-match .sc { font-weight: 700; min-width: 46px; text-align: center; }
+  .rank { font-weight: 700; width: 28px; }
+  tr.me { background: var(--green-soft); }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 0.9rem; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 50; }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚽ World Cup 2026 Pool</h1>
+  <div class="whoami" id="whoami"></div>
+</header>
+<nav>
+  <button data-tab="dashboard" class="active">📊 Dashboard</button>
+  <button data-tab="picks">✅ My Picks</button>
+  <button data-tab="leaderboard">🏆 Leaderboard</button>
+  <button data-tab="results">📅 Results</button>
+</nav>
+<main>
+  <section id="tab-dashboard"></section>
+  <section id="tab-picks" hidden></section>
+  <section id="tab-leaderboard" hidden></section>
+  <section id="tab-results" hidden></section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+let CONFIG = { groups: {}, flags: {}, knockout: [] };
+let GROUP_LETTERS = [];
+let me = JSON.parse(localStorage.getItem("wc26_player") || "null"); // {id, name}
+let myPicks = {};
+
+function flag(team) { return CONFIG.flags[team] || "🏳️"; }
+function api(path, opts) {
+  return fetch(path, Object.assign({ headers: { "Content-Type": "application/json" } }, opts)).then((r) => r.json());
+}
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2200);
+}
+function fmtSync(ts) {
+  if (!ts) return "never";
+  const d = new Date(ts.replace(" ", "T") + "Z");
+  return isNaN(d) ? ts : d.toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+}
+function fmtDate(d) {
+  const dt = new Date(d + "T12:00:00");
+  return dt.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" });
+}
+function updateWhoami() {
+  document.getElementById("whoami").textContent = me ? `Playing as ${me.name}` : "Not signed in";
+}
+
+const tabs = ["dashboard", "picks", "leaderboard", "results"];
+const renderers = {};
+document.querySelectorAll("nav button").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("nav button").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    const tab = btn.dataset.tab;
+    tabs.forEach((t) => { document.getElementById("tab-" + t).hidden = t !== tab; });
+    if (renderers[tab]) renderers[tab]();
+  });
+});
+
+// ---------- Dashboard ----------
+renderers.dashboard = async function () {
+  const el = document.getElementById("tab-dashboard");
+  el.innerHTML = `<div class="grid2">
+    <div class="card"><h2>🔥 Upcoming Games <span class="muted">(today + next 2 days)</span></h2><div id="upcoming">Loading…</div></div>
+    <div class="card"><h2>📋 Group Standings</h2><div id="standings">Loading…</div></div>
+  </div>
+  <div class="card"><h2>🗝️ Knockout Rounds</h2><div id="knockout"></div></div>`;
+
+  const [upcoming, standings] = await Promise.all([api("/api/upcoming"), api("/api/standings")]);
+
+  const up = document.getElementById("upcoming");
+  if (!upcoming.length) {
+    up.innerHTML = `<p class="muted">No matches in this window. Check the Results tab for everything else.</p>`;
+  } else {
+    let html = "", lastDate = null;
+    for (const m of upcoming) {
+      if (m.date !== lastDate) { html += `<div class="date-header">${fmtDate(m.date)}</div>`; lastDate = m.date; }
+      let right = m.score
+        ? `<span class="score">${m.score.h}–${m.score.a}</span>`
+        : `<span>${m.time}</span>`;
+      html += `<div class="match-row">
+        <span class="group-letter">${m.group}</span>
+        <div class="teams">${flag(m.home)} ${m.home} <span class="muted">vs</span> ${flag(m.away)} ${m.away}
+          <div class="meta">${m.venue}</div></div>
+        <div class="right">${right}</div>
+      </div>`;
+    }
+    up.innerHTML = html;
+  }
+
+  document.getElementById("standings").innerHTML = GROUP_LETTERS.map((letter) => {
+    const rows = standings[letter] || [];
+    return `<div style="margin-bottom:14px;">
+      <h3><span class="group-letter">${letter}</span> Group ${letter}</h3>
+      <table><thead><tr><th class="num">#</th><th>Team</th><th class="num">P</th><th class="num">Pts</th><th class="num">GD</th></tr></thead>
+      <tbody>${rows.map((t, i) => `<tr class="${i < 2 ? "advance" : ""}">
+        <td class="num">${i + 1}</td><td>${flag(t.name)} ${t.name}</td>
+        <td class="num">${t.played}</td><td class="num"><b>${t.pts}</b></td>
+        <td class="num">${t.gd > 0 ? "+" + t.gd : t.gd}</td></tr>`).join("")}</tbody></table>
+    </div>`;
+  }).join("");
+
+  document.getElementById("knockout").innerHTML =
+    `<table><tbody>${CONFIG.knockout.map((k) => `<tr><td><b>${k.round}</b></td><td>${k.dates}</td></tr>`).join("")}</tbody></table>`;
+};
+
+// ---------- My Picks ----------
+renderers.picks = async function () {
+  const el = document.getElementById("tab-picks");
+  const inviteURL = window.location.origin;
+
+  if (!me) {
+    el.innerHTML = `<div class="card">
+      <h2>👋 Welcome! Enter your name to play</h2>
+      <p class="muted">Pick the winner of each of the 12 groups. Most correct picks wins the pool.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input type="text" id="nameInput" placeholder="Your name" />
+        <button class="primary" id="joinBtn">Join pool</button>
+      </div></div>`;
+    document.getElementById("joinBtn").onclick = joinPool;
+    document.getElementById("nameInput").addEventListener("keydown", (e) => { if (e.key === "Enter") joinPool(); });
+    return;
+  }
+
+  const players = await api("/api/players");
+  const mine = players.find((p) => p.id === me.id);
+  myPicks = mine ? Object.assign({}, mine.picks) : {};
+
+  el.innerHTML = `
+    <div class="card"><h2>🔗 Invite your friends</h2>
+      <p class="invite">Share this link — it's the whole app: <code>${inviteURL}</code>
+      <button class="ghost" id="copyBtn">Copy</button></p></div>
+    <div class="card"><h2>Your picks — <span id="pickCount">0</span>/12 groups</h2>
+      <div class="progress-wrap"><div class="progress-bar" id="progBar"></div></div>
+      <p class="muted" style="margin-top:8px;">Tap a team to crown your group winner. Tap again to clear.</p></div>
+    <div class="groups-grid" id="pickGrid"></div>
+    <div class="card" style="text-align:center;"><button class="primary" id="saveBtn">💾 Save picks</button></div>`;
+
+  document.getElementById("copyBtn").onclick = () => navigator.clipboard.writeText(inviteURL).then(() => toast("Invite link copied!"));
+  document.getElementById("saveBtn").onclick = savePicks;
+
+  document.getElementById("pickGrid").innerHTML = GROUP_LETTERS.map((letter) => {
+    const g = CONFIG.groups[letter];
+    return `<div class="card"><h3><span class="group-letter">${letter}</span> Group ${letter}</h3>
+      ${g.teams.map((team) => `<button class="team-btn" data-group="${letter}" data-team="${team}">
+        <span>${flag(team)}</span> <span>${team}</span><span class="check"></span></button>`).join("")}</div>`;
+  }).join("");
+
+  document.querySelectorAll("#pickGrid .team-btn").forEach((btn) => {
+    btn.onclick = () => {
+      const { group, team } = btn.dataset;
+      myPicks[group] = (myPicks[group] === team) ? "" : team; // toggle
+      refreshPickUI();
+    };
+  });
+  refreshPickUI();
+};
+
+function refreshPickUI() {
+  const grid = document.getElementById("pickGrid");
+  if (!grid) return;
+  grid.querySelectorAll(".team-btn").forEach((btn) => {
+    const sel = myPicks[btn.dataset.group] === btn.dataset.team;
+    btn.classList.toggle("selected", sel);
+    btn.querySelector(".check").textContent = sel ? "✓" : "";
+  });
+  const count = GROUP_LETTERS.filter((l) => myPicks[l]).length;
+  document.getElementById("pickCount").textContent = count;
+  document.getElementById("progBar").style.width = (count / 12 * 100) + "%";
+}
+
+async function joinPool() {
+  const name = document.getElementById("nameInput").value.trim();
+  if (!name) return toast("Please enter a name");
+  const res = await api("/api/join", { method: "POST", body: JSON.stringify({ name }) });
+  if (res.error) return toast(res.error);
+  me = { id: res.id, name: res.name };
+  localStorage.setItem("wc26_player", JSON.stringify(me));
+  updateWhoami();
+  renderers.picks();
+}
+
+async function savePicks() {
+  const res = await api("/api/picks", { method: "POST", body: JSON.stringify({ player_id: me.id, picks: myPicks }) });
+  if (res.error) return toast(res.error);
+  toast("Picks saved! 🎉");
+}
+
+// ---------- Leaderboard ----------
+renderers.leaderboard = async function () {
+  const el = document.getElementById("tab-leaderboard");
+  el.innerHTML = `<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <h2 style="margin:0;">🏆 Leaderboard</h2><button class="ghost" id="refreshLb">↻ Refresh</button></div>
+    <p class="muted">Score = group winners you currently have right. Faded flags are sitting 3rd/4th in their group.</p>
+    <div id="lbBody">Loading…</div></div>`;
+  document.getElementById("refreshLb").onclick = renderers.leaderboard;
+
+  const board = await api("/api/leaderboard");
+  const body = document.getElementById("lbBody");
+  if (!board.length) { body.innerHTML = `<p class="muted">No players yet. Be the first — head to My Picks!</p>`; return; }
+  body.innerHTML = `<table>
+    <thead><tr><th class="num">#</th><th>Name</th><th class="num">Score</th><th>Picks</th></tr></thead>
+    <tbody>${board.map((p, i) => {
+      const flags = GROUP_LETTERS.map((l) => {
+        const team = p.picks[l]; if (!team) return "";
+        const trailing = p.status && p.status[l] === "trailing";
+        return `<span class="${trailing ? "trailing" : ""}" title="Group ${l}: ${team}">${flag(team)}</span>`;
+      }).join("");
+      const isMe = me && p.id === me.id;
+      return `<tr class="${isMe ? "me" : ""}">
+        <td class="rank">${i + 1}</td>
+        <td>${p.name}${isMe ? `<span class="badge you">you</span>` : ""}</td>
+        <td class="num"><b>${p.correct}</b><span class="muted">/${p.total}</span></td>
+        <td class="flag-list">${flags || '<span class="muted">no picks</span>'}</td></tr>`;
+    }).join("")}</tbody></table>`;
+};
+
+// ---------- Results ----------
+renderers.results = async function () {
+  const el = document.getElementById("tab-results");
+  el.innerHTML = `<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+      <div><h2 style="margin:0;">📅 Results</h2><span class="muted" id="lastSync">Last synced: …</span></div>
+      <button class="ghost" id="syncBtn">🔄 Sync now</button></div></div>
+  <div class="groups-grid" id="resultsGrid">Loading…</div>`;
+
+  document.getElementById("syncBtn").onclick = async () => {
+    document.getElementById("syncBtn").textContent = "Syncing…";
+    const r = await api("/api/sync", { method: "POST" });
+    toast(r.ok ? `Synced — ${r.synced} match(es)` : "Sync failed");
+    renderers.results();
+  };
+
+  const [results, standings, sync] = await Promise.all([api("/api/results"), api("/api/standings"), api("/api/last-sync")]);
+  document.getElementById("lastSync").textContent = "Last synced: " + fmtSync(sync.last_sync);
+
+  document.getElementById("resultsGrid").innerHTML = GROUP_LETTERS.map((letter) => {
+    const g = CONFIG.groups[letter];
+    const rows = standings[letter] || [];
+    return `<div class="card"><h3><span class="group-letter">${letter}</span> Group ${letter}</h3>
+      ${g.matches.map((m) => {
+        const r = results[`${m.home}__${m.away}`];
+        const sc = r ? `<span class="sc">${r.h}–${r.a}</span> <span class="badge auto">auto</span>` : `<span class="sc muted">—</span>`;
+        return `<div class="result-match"><span class="t">${flag(m.home)} ${m.home}</span>${sc}<span class="t" style="text-align:right;">${m.away} ${flag(m.away)}</span></div>
+        <div class="muted" style="font-size:0.72rem; padding-bottom:4px;">${m.date} · ${m.time} · ${m.venue}</div>`;
+      }).join("")}
+      <table style="margin-top:10px;"><thead><tr><th class="num">#</th><th>Team</th><th class="num">P</th><th class="num">Pts</th><th class="num">GD</th></tr></thead>
+      <tbody>${rows.map((t, i) => `<tr class="${i < 2 ? "advance" : ""}"><td class="num">${i + 1}</td><td>${flag(t.name)} ${t.name}</td><td class="num">${t.played}</td><td class="num"><b>${t.pts}</b></td><td class="num">${t.gd > 0 ? "+" + t.gd : t.gd}</td></tr>`).join("")}</tbody></table>
+    </div>`;
+  }).join("");
+};
+
+// ---------- Boot ----------
+(async function init() {
+  updateWhoami();
+  CONFIG = await api("/api/config");
+  GROUP_LETTERS = Object.keys(CONFIG.groups);
+  renderers.dashboard();
+})();
+</script>
+</body>
+</html>
