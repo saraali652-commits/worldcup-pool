@@ -23,18 +23,29 @@ Then open <http://localhost:5000>. The SQLite database (`pool.db`) is created au
 
 > Note: SQLite lives on the instance's local disk. On free tiers it may reset on redeploy — add a persistent volume/disk mounted next to `app.py` if you want picks to survive restarts.
 
+## How it works
+
+This is a **knockout bracket pool**. There's no group-stage picking — players predict the winner of every knockout match, round by round, and earn more points the deeper the round.
+
+The entire bracket (matchups, kickoff times, scores, winners) is pulled **automatically from the openfootball feed** every 5 minutes. Round-of-32 teams appear once the group stage decides them; later rounds fill in as winners advance.
+
 ## Tabs
 
-- **Dashboard** — games today + next 2 days (grouped by date, with live scores) and live group standings (top 2 highlighted as advancing).
-- **My Picks** — tap a team to crown your group winner, progress bar, save. Invite link with copy button.
-- **Leaderboard** — ranked by correct group winners; faded flags = that pick is currently 3rd/4th.
-- **Results** — every group's 6 matches with auto-synced scores + a standings table, plus a "Sync now" button.
+- **Dashboard** — the full match schedule (every upcoming game in date order, group + knockout, with live scores), plus your personal bracket score and your decided picks at the top.
+- **Bracket** — tap a team to pick the winner of each knockout match. Picks save instantly and **lock the moment that match kicks off**. Decided matches show the result and whether you got it right.
+- **Leaderboard** — ranked by total points.
 
-## How scoring works
+## Scoring
 
-- Standings use standard football points (W=3, D=1, L=0), tie-broken by goal difference, then goals for.
-- Your score = number of groups where your pick is **currently top** of the table.
-- A group only counts once at least one of its matches has been played.
+| Correct winner pick | Points |
+| --- | --- |
+| Round of 32 | 1 |
+| Round of 16 | 2 |
+| Quarterfinals | 3 |
+| Semifinals | 4 |
+| Final | 5 |
+
+A pick only scores once that match has a winner. Picks lock at kickoff, so you can't change them after a game starts.
 
 ## Notes
 
