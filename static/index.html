@@ -97,6 +97,15 @@ function isTBD(t){ return !t || /^[WL]\d+$/i.test(t); } // feed placeholder like
 function api(p,o){ return fetch(p, Object.assign({headers:{"Content-Type":"application/json"}}, o)).then(r=>r.json()); }
 function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
 function updateWhoami(){ document.getElementById("whoami").textContent = me ? `Playing as ${me.name}` : "Not signed in"; }
+// Fetch the current player's profile; if the stored id is invalid (e.g. DB reset),
+// clear it so the app cleanly falls back to the join screen instead of crashing.
+async function safeMe(id){
+  try {
+    const d = await api("/api/me/"+id);
+    if (d && d.error){ me=null; localStorage.removeItem("wc26_player"); updateWhoami(); return null; }
+    return d;
+  } catch(e){ return null; }
+}
 function fmtDate(d){ if(!d) return ""; const dt=new Date(d+"T12:00:00"); return dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}); }
 function fmtSync(ts){ if(!ts) return "never"; const d=new Date(ts.replace(" ","T")+"Z"); return isNaN(d)?ts:d.toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}); }
 
@@ -120,11 +129,20 @@ renderers.dashboard = async function(){
       <p class="muted">Every upcoming match in order. Group games and knockout games included.</p>
       <div id="sched">Loading…</div></div>`;
 
-  // Personal status panel first (returning users see their bracket immediately)
-  if (me) {
-    const meData = await api("/api/me/"+me.id);
-    const done = meData.picks.filter(p=>p.status==="correct"||p.status==="wrong");
-    const ps = document.getElementById("pstatus");
+  // Load the schedule FIRST so nothing else can block it.
+  let sched = [], sync = {};
+  try {
+    [sched, sync] = await Promise.all([api("/api/schedule"), api("/api/last-sync")]);
+  } catch (e) {
+    document.getElementById("sched").innerHTML = `<p class="muted">Couldn't load the schedule. Refresh to try again.</p>`;
+  }
+  document.getElementById("lastSync").textContent = "Synced: " + fmtSync(sync.last_sync);
+
+  // Personal status panel (never blocks the schedule above).
+  const ps = document.getElementById("pstatus");
+  const meData = me ? await safeMe(me.id) : null;
+  if (me && meData) {
+    const done = (meData.picks || []).filter(p=>p.status==="correct"||p.status==="wrong");
     ps.innerHTML = `<div class="card">
       <div class="scoreband">
         <div><div class="big">${meData.total_score}</div><div class="muted">your points</div></div>
@@ -139,12 +157,9 @@ renderers.dashboard = async function(){
         </div>`).join("") : `<p class="muted" style="margin-top:12px;">No results in yet — your points will appear as knockout games finish.</p>`}
     </div>`;
   } else {
-    document.getElementById("pstatus").innerHTML =
-      `<div class="card"><h2>👋 Join the pool</h2><p class="muted">Head to the <b>Bracket</b> tab to enter your name and start picking knockout winners.</p></div>`;
+    ps.innerHTML = `<div class="card"><h2>👋 Join the pool</h2><p class="muted">Head to the <b>Bracket</b> tab to enter your name and start picking knockout winners.</p></div>`;
   }
 
-  const [sched, sync] = await Promise.all([api("/api/schedule"), api("/api/last-sync")]);
-  document.getElementById("lastSync").textContent = "Synced: " + fmtSync(sync.last_sync);
   const s = document.getElementById("sched");
   if (!sched.length){ s.innerHTML = `<p class="muted">No upcoming matches. The tournament may be over 🏆</p>`; return; }
   let html="", last=null;
@@ -188,8 +203,9 @@ renderers.bracket = async function(){
   document.getElementById("copyBtn").onclick = ()=>navigator.clipboard.writeText(location.origin).then(()=>toast("Link copied!"));
 
   const [bracket, picks, meData] = await Promise.all([
-    api("/api/bracket"), api("/api/bracket/picks/"+me.id), api("/api/me/"+me.id)]);
-  document.getElementById("myPts").textContent = meData.total_score;
+    api("/api/bracket"), api("/api/bracket/picks/"+me.id), safeMe(me.id)]);
+  if (!me){ renderers.bracket(); return; }  // stored id was invalid → back to join screen
+  document.getElementById("myPts").textContent = (meData && meData.total_score) || 0;
 
   const body = document.getElementById("bracketBody");
   const anyMatches = bracket.order.some(r => (bracket.rounds[r]||[]).length);
