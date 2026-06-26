@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>⚽ World Cup 2026 Bracket Pool</title>
+<style>
+  :root {
+    --navy:#0d1b2a; --green:#22c55e; --green-soft:#dcfce7; --amber:#f59e0b;
+    --red:#ef4444; --border:#e5e7eb; --muted:#6b7280; --bg:#f4f6f9; --card:#fff;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:#111827; }
+  header { background:var(--navy); color:#fff; padding:18px 20px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; }
+  header h1 { font-size:1.2rem; margin:0; }
+  header .whoami { font-size:.85rem; color:#cbd5e1; }
+  nav { display:flex; background:var(--navy); border-top:1px solid rgba(255,255,255,.08); }
+  nav button { flex:1; background:none; border:none; color:#cbd5e1; padding:14px 10px; font-size:.92rem; cursor:pointer; border-bottom:3px solid transparent; }
+  nav button.active { color:#fff; border-bottom-color:var(--green); font-weight:600; }
+  main { max-width:1100px; margin:0 auto; padding:18px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:16px; }
+  h2 { font-size:1.05rem; margin:0 0 12px; }
+  h3 { font-size:.95rem; margin:0 0 8px; }
+  .muted { color:var(--muted); font-size:.82rem; }
+  .badge { display:inline-block; font-size:.72rem; font-weight:700; padding:2px 7px; border-radius:999px; background:var(--navy); color:#fff; }
+  .badge.live { background:var(--red); }
+  .badge.ko { background:#6d28d9; }
+  .badge.grp { background:#475569; }
+  .badge.pts { background:var(--green); color:#052e16; }
+  .badge.you { background:var(--green); color:#052e16; margin-left:6px; }
+  .date-header { font-size:.8rem; font-weight:700; color:var(--muted); text-transform:uppercase; margin:16px 0 4px; }
+  .match-row { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .match-row:last-child { border-bottom:none; }
+  .match-row .teams { flex:1; font-size:.95rem; }
+  .match-row .meta { font-size:.76rem; color:var(--muted); }
+  .match-row .right { text-align:right; font-size:.85rem; white-space:nowrap; }
+  .score { font-weight:700; font-size:1.05rem; }
+  table { width:100%; border-collapse:collapse; font-size:.88rem; }
+  th,td { text-align:left; padding:8px 6px; border-bottom:1px solid var(--border); }
+  th { color:var(--muted); font-weight:600; font-size:.74rem; text-transform:uppercase; }
+  td.num,th.num { text-align:center; }
+  tr.me { background:var(--green-soft); }
+  .rank { font-weight:700; width:28px; }
+  /* bracket */
+  .round-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:12px; }
+  .ko-card { border:1.5px solid var(--border); border-radius:12px; padding:12px; background:#fff; }
+  .ko-card .hd { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .pickbtn { display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:10px 12px; margin:5px 0; border:1.5px solid var(--border); border-radius:9px; background:#fff; cursor:pointer; font-size:.95rem; }
+  .pickbtn:hover:not(:disabled) { border-color:#cbd5e1; }
+  .pickbtn.sel { border-color:var(--green); background:var(--green-soft); font-weight:700; }
+  .pickbtn.win { border-color:var(--green); }
+  .pickbtn.lose { opacity:.5; }
+  .pickbtn:disabled { cursor:default; }
+  .pickbtn .sc { margin-left:auto; font-weight:700; }
+  .lockmsg { font-size:.74rem; color:var(--muted); margin-top:4px; }
+  .tbd { padding:14px; text-align:center; color:var(--muted); font-size:.85rem; }
+  /* personal status */
+  .pstat { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid var(--border); font-size:.9rem; }
+  .pstat:last-child { border-bottom:none; }
+  .pstat .dot { width:10px; height:10px; border-radius:50%; flex:none; }
+  .dot.correct { background:var(--green);} .dot.wrong { background:var(--red);} .dot.pending{background:var(--amber);} .dot.none{background:var(--border);} .dot.locked{background:var(--amber);}
+  .pstat .t { flex:1; }
+  .scoreband { display:flex; gap:18px; flex-wrap:wrap; align-items:center; }
+  .scoreband .big { font-size:2rem; font-weight:800; color:var(--green); line-height:1; }
+  button.primary { background:var(--green); color:#052e16; border:none; padding:11px 18px; border-radius:10px; font-weight:700; cursor:pointer; font-size:.95rem; }
+  button.ghost { background:#fff; border:1.5px solid var(--border); padding:9px 14px; border-radius:10px; cursor:pointer; font-weight:600; font-size:.88rem; }
+  input[type=text] { padding:11px 12px; border:1.5px solid var(--border); border-radius:10px; font-size:.95rem; width:100%; max-width:320px; }
+  .invite { font-size:.82rem; color:var(--muted); word-break:break-all; }
+  .invite code { background:#f1f5f9; padding:2px 6px; border-radius:6px; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:#fff; padding:12px 20px; border-radius:10px; font-size:.9rem; opacity:0; transition:opacity .25s; pointer-events:none; z-index:50; }
+  .toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚽ World Cup 2026 Bracket Pool</h1>
+  <div class="whoami" id="whoami"></div>
+</header>
+<nav>
+  <button data-tab="dashboard" class="active">📊 Dashboard</button>
+  <button data-tab="bracket">🗝️ Bracket</button>
+  <button data-tab="leaderboard">🏆 Leaderboard</button>
+</nav>
+<main>
+  <section id="tab-dashboard"></section>
+  <section id="tab-bracket" hidden></section>
+  <section id="tab-leaderboard" hidden></section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+let CONFIG = { flags:{}, round_labels:{}, round_points:{}, pick_rounds:[] };
+let me = JSON.parse(localStorage.getItem("wc26_player") || "null"); // {id,name}
+
+function flag(t){ return (CONFIG.flags && CONFIG.flags[t]) || (isTBD(t) ? "⬜" : "🏳️"); }
+function isTBD(t){ return !t || /^[WL]\d+$/i.test(t); } // feed placeholder like "W74"
+function api(p,o){ return fetch(p, Object.assign({headers:{"Content-Type":"application/json"}}, o)).then(r=>r.json()); }
+function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),2200); }
+function updateWhoami(){ document.getElementById("whoami").textContent = me ? `Playing as ${me.name}` : "Not signed in"; }
+function fmtDate(d){ if(!d) return ""; const dt=new Date(d+"T12:00:00"); return dt.toLocaleDateString("en-US",{weekday:"long",month:"short",day:"numeric"}); }
+function fmtSync(ts){ if(!ts) return "never"; const d=new Date(ts.replace(" ","T")+"Z"); return isNaN(d)?ts:d.toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}); }
+
+const tabs=["dashboard","bracket","leaderboard"], renderers={};
+document.querySelectorAll("nav button").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    const tab=btn.dataset.tab;
+    tabs.forEach(t=>{ document.getElementById("tab-"+t).hidden = t!==tab; });
+    renderers[tab] && renderers[tab]();
+  });
+});
+
+// ───────── Dashboard ─────────
+renderers.dashboard = async function(){
+  const el = document.getElementById("tab-dashboard");
+  el.innerHTML = `<div id="pstatus"></div>
+    <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <h2 style="margin:0;">📅 Match Schedule</h2><span class="muted" id="lastSync"></span></div>
+      <p class="muted">Every upcoming match in order. Group games and knockout games included.</p>
+      <div id="sched">Loading…</div></div>`;
+
+  // Personal status panel first (returning users see their bracket immediately)
+  if (me) {
+    const meData = await api("/api/me/"+me.id);
+    const done = meData.picks.filter(p=>p.status==="correct"||p.status==="wrong");
+    const ps = document.getElementById("pstatus");
+    ps.innerHTML = `<div class="card">
+      <div class="scoreband">
+        <div><div class="big">${meData.total_score}</div><div class="muted">your points</div></div>
+        <div><div class="big" style="color:#111827">${meData.correct}</div><div class="muted">correct picks</div></div>
+        <div style="flex:1"></div>
+        <a class="ghost" href="#" onclick="document.querySelector('nav button[data-tab=bracket]').click();return false;">Make / edit picks →</a>
+      </div>
+      ${done.length ? `<h3 style="margin-top:14px;">Your decided picks</h3>` + done.map(p=>`
+        <div class="pstat"><span class="dot ${p.status}"></span>
+          <span class="t">${CONFIG.round_labels[p.round]}: ${flag(p.pick)} ${p.pick}</span>
+          <span class="muted">${p.status==="correct"?`+${p.points} ✓`:`✗ (won: ${flag(p.winner)} ${p.winner})`}</span>
+        </div>`).join("") : `<p class="muted" style="margin-top:12px;">No results in yet — your points will appear as knockout games finish.</p>`}
+    </div>`;
+  } else {
+    document.getElementById("pstatus").innerHTML =
+      `<div class="card"><h2>👋 Join the pool</h2><p class="muted">Head to the <b>Bracket</b> tab to enter your name and start picking knockout winners.</p></div>`;
+  }
+
+  const [sched, sync] = await Promise.all([api("/api/schedule"), api("/api/last-sync")]);
+  document.getElementById("lastSync").textContent = "Synced: " + fmtSync(sync.last_sync);
+  const s = document.getElementById("sched");
+  if (!sched.length){ s.innerHTML = `<p class="muted">No upcoming matches. The tournament may be over 🏆</p>`; return; }
+  let html="", last=null;
+  for (const m of sched){
+    if (m.date!==last){ html+=`<div class="date-header">${fmtDate(m.date)}</div>`; last=m.date; }
+    const rb = m.is_knockout ? `<span class="badge ko">${CONFIG.round_labels[m.round]||m.round_label}</span>`
+                             : `<span class="badge grp">${m.group||"Group"}</span>`;
+    let right = m.score ? `<span class="score">${m.score.h}–${m.score.a}</span>`
+              : (m.status==="live" ? `<span class="badge live">● LIVE</span>` : `<span>${m.time_et}</span>`);
+    const home = isTBD(m.home)?"TBD":m.home, away = isTBD(m.away)?"TBD":m.away;
+    html += `<div class="match-row">${rb}
+      <div class="teams">${flag(m.home)} ${home} <span class="muted">vs</span> ${flag(m.away)} ${away}
+        <div class="meta">${m.venue||""}</div></div>
+      <div class="right">${right}</div></div>`;
+  }
+  s.innerHTML = html;
+};
+
+// ───────── Bracket ─────────
+renderers.bracket = async function(){
+  const el = document.getElementById("tab-bracket");
+  if (!me){
+    el.innerHTML = `<div class="card"><h2>👋 Enter your name to play</h2>
+      <p class="muted">Pick the winner of every knockout match. Later rounds are worth more points.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <input type="text" id="nameInput" placeholder="Your name"/>
+        <button class="primary" id="joinBtn">Join pool</button></div></div>`;
+    document.getElementById("joinBtn").onclick = joinPool;
+    document.getElementById("nameInput").addEventListener("keydown",e=>{ if(e.key==="Enter") joinPool(); });
+    return;
+  }
+  el.innerHTML = `<div class="card">
+      <h2>🔗 Invite friends</h2>
+      <p class="invite">Share this link — it's the whole app: <code>${location.origin}</code>
+      <button class="ghost" id="copyBtn">Copy</button></p></div>
+    <div class="card"><div class="scoreband">
+      <div><div class="big" id="myPts">0</div><div class="muted">your points</div></div>
+      <div class="muted" style="flex:1">Tap a team to pick the winner. Picks save instantly and lock when the match kicks off.</div>
+    </div></div>
+    <div id="bracketBody">Loading…</div>`;
+  document.getElementById("copyBtn").onclick = ()=>navigator.clipboard.writeText(location.origin).then(()=>toast("Link copied!"));
+
+  const [bracket, picks, meData] = await Promise.all([
+    api("/api/bracket"), api("/api/bracket/picks/"+me.id), api("/api/me/"+me.id)]);
+  document.getElementById("myPts").textContent = meData.total_score;
+
+  const body = document.getElementById("bracketBody");
+  const anyMatches = bracket.order.some(r => (bracket.rounds[r]||[]).length);
+  if (!anyMatches){
+    body.innerHTML = `<div class="card tbd">🏟️ The knockout bracket isn't set yet.<br>
+      It fills in automatically from the live feed once the Round of 32 matchups are confirmed (after the group stage, ~June 28). Check back soon!</div>`;
+    return;
+  }
+  body.innerHTML = bracket.order.map(rc=>{
+    const matches = bracket.rounds[rc]||[];
+    if (!matches.length) return "";
+    return `<div class="card"><h2>${CONFIG.round_labels[rc]} <span class="badge pts">${CONFIG.round_points[rc]} pt${CONFIG.round_points[rc]>1?"s":""} each</span></h2>
+      <div class="round-grid">${matches.map(m=>koCard(m, picks[m.match_key])).join("")}</div></div>`;
+  }).join("");
+
+  body.querySelectorAll(".pickbtn").forEach(btn=>{
+    btn.onclick = ()=>pick(btn.dataset.key, btn.dataset.team);
+  });
+};
+
+function koCard(m, myPick){
+  const tbd = isTBD(m.home) || isTBD(m.away);
+  const decided = !!m.winner;
+  function side(team){
+    if (isTBD(team)) return `<div class="pickbtn" style="opacity:.5">${flag(team)} TBD</div>`;
+    const sel = myPick===team;
+    let cls = "pickbtn" + (sel?" sel":"");
+    if (decided){ cls += (team===m.winner ? " win" : " lose"); }
+    const disabled = (m.locked || decided) ? "disabled" : "";
+    return `<button class="${cls}" ${disabled} data-key="${m.match_key}" data-team="${team}">
+      ${flag(team)} ${team}${sel?' <span style="color:var(--green)">✓</span>':""}</button>`;
+  }
+  let footer = "";
+  if (decided && m.score) footer = `<div class="lockmsg">Final: ${m.score.h}–${m.score.a} · won by ${flag(m.winner)} ${m.winner}${myPick?(myPick===m.winner?` · you +${m.points} ✓`:" · you missed ✗"):""}</div>`;
+  else if (m.locked) footer = `<div class="lockmsg">🔒 Kicked off — picks locked</div>`;
+  else footer = `<div class="lockmsg">${m.date?fmtDate(m.date)+" · ":""}${m.time_et||""}</div>`;
+  return `<div class="ko-card">
+    <div class="hd"><span class="muted">#${m.match_key}</span>${m.venue?`<span class="muted" style="font-size:.72rem">${m.venue}</span>`:""}</div>
+    ${tbd ? `<div class="tbd">Teams not set yet</div>` : side(m.home)+side(m.away)}
+    ${footer}</div>`;
+}
+
+async function pick(matchKey, team){
+  const res = await api("/api/bracket/pick", {method:"POST", body:JSON.stringify({player_id:me.id, match_key:matchKey, team_name:team})});
+  if (res.error){ toast(res.error); }
+  renderers.bracket(); // re-render to reflect selection + score
+}
+
+async function joinPool(){
+  const name = document.getElementById("nameInput").value.trim();
+  if (!name) return toast("Please enter a name");
+  const res = await api("/api/join",{method:"POST", body:JSON.stringify({name})});
+  if (res.error) return toast(res.error);
+  me = {id:res.id, name:res.name};
+  localStorage.setItem("wc26_player", JSON.stringify(me));
+  updateWhoami(); renderers.bracket();
+}
+
+// ───────── Leaderboard ─────────
+renderers.leaderboard = async function(){
+  const el = document.getElementById("tab-leaderboard");
+  el.innerHTML = `<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <h2 style="margin:0;">🏆 Leaderboard</h2><button class="ghost" id="refreshLb">↻ Refresh</button></div>
+    <p class="muted">Points: R32 = 1, R16 = 2, QF = 3, SF = 4, Final = 5. Pick deeper rounds right for the big points.</p>
+    <div id="lbBody">Loading…</div></div>`;
+  document.getElementById("refreshLb").onclick = renderers.leaderboard;
+  const board = await api("/api/leaderboard");
+  const b = document.getElementById("lbBody");
+  if (!board.length){ b.innerHTML = `<p class="muted">No players yet. Head to the Bracket tab!</p>`; return; }
+  b.innerHTML = `<table>
+    <thead><tr><th class="num">#</th><th>Name</th><th class="num">Correct</th><th class="num">Points</th></tr></thead>
+    <tbody>${board.map((p,i)=>{
+      const isMe = me && p.id===me.id;
+      return `<tr class="${isMe?"me":""}"><td class="rank">${i+1}</td>
+        <td>${p.name}${isMe?'<span class="badge you">you</span>':""}</td>
+        <td class="num">${p.correct}</td>
+        <td class="num"><b>${p.total_score}</b></td></tr>`;
+    }).join("")}</tbody></table>`;
+};
+
+// ───────── Boot ─────────
+(async function(){
+  updateWhoami();
+  CONFIG = await api("/api/config");
+  renderers.dashboard();
+})();
+</script>
+</body>
+</html>
